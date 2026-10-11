@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil forçat amb !important perquè Streamlit no sobrescrigui la mida
+# Estil forçat amb !important per assegurar la mida gegant del títol
 st.markdown("""
     <style>
     .stApp {
@@ -66,7 +66,6 @@ st.write("")
 
 # --- SECCIÓ 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
 st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
-st.write("Fes clic un cop i colpeja ràpidament la fusta:")
 
 audio_info = mic_recorder(
     start_prompt="🎙️ CLICA I COLPEJA",
