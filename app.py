@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil modern, minimalista i amb detalls de lutherie (accent daurat/fusta #D4A373)
+# Estil minimalista net, sense caixes grises i amb detall d'accent daurat
 st.markdown("""
     <style>
     .stApp {
@@ -37,27 +37,20 @@ st.markdown("""
         letter-spacing: 1px;
         text-transform: uppercase;
     }
-    .fustap-card {
-        background-color: #121212;
-        border: 1px solid #262626;
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 16px;
-    }
-    .card-label {
+    .field-label {
         font-size: 12px;
         font-weight: bold;
         color: #8E8E93;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         letter-spacing: 0.5px;
         text-transform: uppercase;
     }
     .freq-display {
-        font-size: 38px;
+        font-size: 42px;
         font-weight: 800;
         color: #D4A373;
         text-align: center;
-        margin-top: 12px;
+        margin-top: 15px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -71,25 +64,24 @@ if 'analizador' not in st.session_state:
 st.markdown('<p class="title-main">FustApp</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Anàlisi acústica de placa lliure</p>', unsafe_allow_html=True)
 
-# --- TARJETA 1: SELECCIÓ DE FUSTA ---
-st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-st.markdown('<p class="card-label">Selecciona la fusta</p>', unsafe_allow_html=True)
+# --- SECCIÓ 1: SELECCIÓ DE FUSTA ---
+st.markdown('<p class="field-label">Selecciona la fusta</p>', unsafe_allow_html=True)
 fusta_seleccionada = st.selectbox(
     "Fusta", 
     list(st.session_state.analizador.maderas_db.keys()),
     label_visibility="collapsed"
 )
-st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 2: GROIX ACTUAL ---
-st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-st.markdown('<p class="card-label">Gruix actual de la placa (mm)</p>', unsafe_allow_html=True)
+st.write("")
+
+# --- SECCIÓ 2: GROIX ACTUAL ---
+st.markdown('<p class="field-label">Gruix actual de la placa (mm)</p>', unsafe_allow_html=True)
 gruix_str = st.text_input("Gruix", placeholder="Ex: 2.8", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
-st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-st.markdown('<p class="card-label">Captura del cop en directe</p>', unsafe_allow_html=True)
+st.write("")
+
+# --- SECCIÓ 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
+st.markdown('<p class="field-label">Captura del cop en directe</p>', unsafe_allow_html=True)
 
 audio_info = mic_recorder(
     start_prompt="🎙️ CLICA I COLPEJA",
@@ -117,7 +109,8 @@ if audio_info and 'bytes' in audio_info:
         st.error(f"Error processant l'àudio: {e}")
 
 st.markdown(f"<div class='freq-display'>{st.session_state.freq_captada} Hz</div>", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+
+st.write("")
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
 if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True):
@@ -136,17 +129,12 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
     )
     diferencia = grosor_nou - grosor_actual
     
-    # --- RESULTATS EN TARJETA PREMIUM ---
-    st.markdown(f"""
-        <div class="fustap-card" style="border-color: #D4A373; margin-top: 15px;">
-            <p class="card-label" style="color: #D4A373;">Resultats per a {fusta_seleccionada.upper()}</p>
-            <div style="font-size: 13px; line-height: 1.8; color: #E5E5EA;">
-                • <b>Velocitat del so (v):</b> {v_sonido} m/s<br>
-                • <b>Freqüència objectiu:</b> {f_obj} Hz<br>
-                • <b>Gruix òptim calculat:</b> {grosor_nou} mm
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    # --- RESULTATS PLANS SENSE CAIXES ---
+    st.markdown("---")
+    st.markdown(f"<p style='color: #D4A373; font-weight: bold; text-transform: uppercase;'>Resultats per a {fusta_seleccionada}:</p>", unsafe_allow_html=True)
+    st.write(f"• Velocitat del so (v): {v_sonido} m/s")
+    st.write(f"• Freqüència objectiu: {f_obj} Hz")
+    st.write(f"• Gruix òptim calculat: {grosor_nou} mm")
     
     if abs(st.session_state.freq_captada - f_obj) <= 1.5:
         st.success("✅ Freqüència òptima assolida. Placa llesta!")
@@ -156,4 +144,4 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
         st.info("ℹ️ Placa flexible per sota de l'objectiu. Vigila.")
 
 # --- PEU DE PÀGINA ---
-st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold; margin-top: 35px;'>By: Joan Serrato</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold; margin-top: 40px;'>By: Joan Serrato</p>", unsafe_allow_html=True)
