@@ -1,6 +1,8 @@
 import numpy as np
-import sounddevice as sd
-
+try:
+    import sounddevice as sd
+except (ImportError, OSError):
+    sd = None  # Evita que la nube colapse si no hay PortAudio o sounddevice
 class AnalizadorTapTuning:
     def __init__(self, sample_rate=44100, duration=1.5):
         """
@@ -38,15 +40,18 @@ class AnalizadorTapTuning:
             }
         }
 
-    def grabar_golpe(self):
-        """Activa el micròfon del dispositiu, grava el 'tap' i retorna l'array d'àudio."""
-        print("🎙️ Escoltant... ¡Colpeja la fusta ara!")
-        audio_data = sd.rec(int(self.duration * self.sample_rate), 
-                            samplerate=self.sample_rate, 
-                            channels=1, 
-                            dtype='float32')
-        sd.wait()
-        return audio_data.flatten()
+   def grabar_golpe(self):
+    """Activa el micròfon del dispositiu, grava el 'tap' i retorna l'array d'àudio."""
+    if sd is None:
+        raise RuntimeError("El micròfon no està disponible al núvol. Introdueix la freqüència manualment.")
+        
+    print("🎙️ Escoltant... ¡Colpeja la fusta ara!")
+    audio_data = sd.rec(int(self.duration * self.sample_rate),
+                samplerate=self.sample_rate,
+                channels=1,
+                dtype='float32')
+    sd.wait()
+    return audio_data.flatten()
 
     def obtener_frecuencia_dominante(self, audio_data):
         """
