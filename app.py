@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil minimalista net amb el títol gegant (el doble de gran, 80px)
+# Estil forçat amb !important perquè Streamlit no sobrescrigui la mida
 st.markdown("""
     <style>
     .stApp {
@@ -22,9 +22,9 @@ st.markdown("""
         font-family: Arial, sans-serif;
     }
     .title-main {
-        font-size: 80px;
-        font-weight: 900;
-        color: #FFFFFF;
+        font-size: 80px !important;
+        font-weight: 900 !important;
+        color: #FFFFFF !important;
         letter-spacing: -1px;
         margin-bottom: 0px;
         line-height: 1.1;
