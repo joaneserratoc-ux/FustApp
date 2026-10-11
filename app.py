@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil CSS personalitzat per a disseny fosc absolut
+# Estil CSS net i unificat per evitar duplicitats o desfases
 st.markdown("""
     <style>
     .stApp {
@@ -21,15 +21,15 @@ st.markdown("""
         color: #FFFFFF;
         font-family: Arial, sans-serif;
     }
-    .card {
+    .fustap-card {
         background-color: #181818;
         border: 1px solid #2A2A2A;
         border-radius: 16px;
         padding: 16px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
     .title-main {
-        font-size: 32px;
+        font-size: 30px;
         font-weight: bold;
         color: #FFFFFF;
         margin-bottom: 0px;
@@ -49,32 +49,33 @@ if 'analizador' not in st.session_state:
     st.session_state.freq_captada = 0.0
 
 # --- CAPÇALERA ---
-st.markdown('<p class="title-main">FUSTAP</p>', unsafe_allow_html=True)
+st.markdown('<p class="title-main">FustApp</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">ANÀLISI ACÚSTICA DE PLACA LLIURE</p>', unsafe_allow_html=True)
 
 # --- TARJETA 1: SELECCIÓ DE FUSTA ---
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>SELECCIONA LA FUSTA</b>', unsafe_allow_html=True)
-fusta_seleccionada = st.selectbox(
-    "", 
-    list(st.session_state.analizador.maderas_db.keys()),
-    label_visibility="collapsed"
-)
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container():
+    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
+    st.markdown('<b>SELECCIONA LA FUSTA</b>', unsafe_allow_html=True)
+    fusta_seleccionada = st.selectbox(
+        "Fusta", 
+        list(st.session_state.analizador.maderas_db.keys()),
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TARJETA 2: GROIX ACTUAL ---
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
-gruix_str = st.text_input("", placeholder="Ex: 2.8", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container():
+    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
+    st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
+    gruix_str = st.text_input("Gruix", placeholder="Ex: 2.8", label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: CAPTURA DE L'ÀUDIO EN DIRECTE (UN SOL CLIC) ---
+# --- TARJETA 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
 with st.container():
     st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
     st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
     st.write("Fes clic un cop i colpeja ràpidament la fusta:")
-
-    # Amb just_once=True, el micro s'activa, grava el cop i s'atura sol automàticament
+    
     audio_info = mic_recorder(
         start_prompt="🎙️ CLICA I COLPEJA",
         just_once=True,
@@ -121,7 +122,7 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
     diferencia = grosor_nou - grosor_actual
     
     # --- TARJETA 4: RESULTATS ---
-    st.markdown('<div class="card" style="background-color: #121212;">', unsafe_allow_html=True)
+    st.markdown('<div class="fustap-card" style="background-color: #121212;">', unsafe_allow_html=True)
     st.markdown(f"<b>RESULTATS PER A {fusta_seleccionada.upper()}:</b>", unsafe_allow_html=True)
     st.write(f"• Velocitat del so (v): {v_sonido} m/s")
     st.write(f"• Freqüència objectiu: {f_obj} Hz")
@@ -136,4 +137,4 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- PEU DE PÀGINA ---
-st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold;'>By: Joan Serrato</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold; margin-top: 20px;'>By: Joan Serrato</p>", unsafe_allow_html=True)
