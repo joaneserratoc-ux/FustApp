@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil minimalista net (sense caixes ni blocs innecessaris)
+# Estil minimalista net amb el títol destacat i gran
 st.markdown("""
     <style>
     .stApp {
@@ -22,9 +22,10 @@ st.markdown("""
         font-family: Arial, sans-serif;
     }
     .title-main {
-        font-size: 28px;
-        font-weight: bold;
+        font-size: 40px;
+        font-weight: 800;
         color: #FFFFFF;
+        letter-spacing: -0.5px;
         margin-bottom: 0px;
     }
     .sub-title {
@@ -32,6 +33,7 @@ st.markdown("""
         font-weight: bold;
         color: #8E8E93;
         margin-bottom: 25px;
+        letter-spacing: 0.5px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -53,7 +55,7 @@ fusta_seleccionada = st.selectbox(
     label_visibility="collapsed"
 )
 
-st.write("") # Espaiat net
+st.write("")
 
 # --- SECCIÓ 2: GROIX ACTUAL ---
 st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
