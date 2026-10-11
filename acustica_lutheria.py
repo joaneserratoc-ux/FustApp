@@ -1,6 +1,6 @@
 import numpy as np
 try:
-    import sounddevice as sd
+import sounddevice as sd
 except (ImportError, OSError):
     sd = None  # Evita que la nube colapse si no hay PortAudio o sounddevice
 class AnalizadorTapTuning:
