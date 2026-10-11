@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil minimalista net amb el títol destacat i gran
+# Estil minimalista net amb el títol gegant (el doble de gran, 80px)
 st.markdown("""
     <style>
     .stApp {
@@ -22,11 +22,12 @@ st.markdown("""
         font-family: Arial, sans-serif;
     }
     .title-main {
-        font-size: 40px;
-        font-weight: 800;
+        font-size: 80px;
+        font-weight: 900;
         color: #FFFFFF;
-        letter-spacing: -0.5px;
+        letter-spacing: -1px;
         margin-bottom: 0px;
+        line-height: 1.1;
     }
     .sub-title {
         font-size: 11px;
