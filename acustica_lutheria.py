@@ -28,7 +28,7 @@ class AnalizadorTapTuning:
                 "f_objetivo": 235.0,  # Freqüència objectiu per a fons flamencs (Hz)
                 "rol": "Fons / Aros (Guitarra Flamenca Blanca)"
             },
-            "Pino Romerón": {
+            "Pi avet": {
                 "E": 9.2e9,           # Mòdul de Young longitudinal (Pa)
                 "rho": 440.0,         # Densitat (kg/m^3)
                 "f_objetivo": 185.0,  # Freqüència objectiu per a tapa (Hz)
