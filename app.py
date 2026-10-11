@@ -1,5 +1,6 @@
 import streamlit as st
 from acustica_lutheria import AnalizadorTapTuning
+from streamlit_mic_recorder import mic_recorder  # Componente per gravar des del mòbil
 
 # Configuració de la pàgina per a format mòbil
 st.set_page_config(
@@ -9,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil CSS personalitzat per replicar el teu disseny fosc absolut i targetes
+# Estil CSS personalitzat
 st.markdown("""
     <style>
     .stApp {
@@ -64,19 +65,27 @@ st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
 gruix_str = st.text_input("", placeholder="Ex: 2.8", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: FREQÜÈNCIA I MICRÒFON ---
+# --- TARJETA 3: FREQÜÈNCIA I MICRÒFON MÒBIL ---
 st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>FREQÜÈNCIA CAPTADA PEL MICRÒFON</b>', unsafe_allow_html=True)
-st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
+st.markdown('<b>CAPTURA DE L\'ÀUDIO AMB EL MÒBIL</b>', unsafe_allow_html=True)
 
-# Botó d'escoltar (al mòbil pot utilitzar l'entrada de veu del navegador)
-if st.button("🎙️ ESCOLTAR COP (MICRÒFON)", use_container_width=True):
-    try:
-        audio = st.session_state.analizador.grabar_golpe()
-        st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio)
-        st.rerun()
-    except Exception as e:
-        st.error(f"Error de micròfon: {e}")
+# Aquest botó activa directament el micròfon del telèfon a través del navegador
+audio_info = mic_recorder(
+    start_prompt="🎙️ CLICA PER GRAVAR EL COP",
+    stop_prompt="⏹️ ATURAR I ANALITZAR",
+    key='mic_mobil'
+)
+
+if audio_info:
+    # El component retorna un diccionari amb les dades d'àudio en bytes
+    audio_bytes = audio_info['bytes']
+    import numpy as np
+    # Convertim els bytes d'àudio a array de numpy per a la FFT
+    audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+    if len(audio_np) > 0:
+        st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_np)
+
+st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
@@ -88,7 +97,7 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
         st.stop()
         
     if st.session_state.freq_captada <= 0:
-        st.warning("Primer has de capturar un cop amb el micròfon.")
+        st.warning("Primer has de gravar un cop amb el micròfon.")
         st.stop()
 
     grosor_nou, v_sonido, f_obj = st.session_state.analizador.calcular_ajuste_grosor(
