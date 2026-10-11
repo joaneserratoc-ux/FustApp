@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil CSS net i unificat per evitar duplicitats o desfases
+# Estil minimalista net (sense caixes ni blocs innecessaris)
 st.markdown("""
     <style>
     .stApp {
@@ -21,15 +21,8 @@ st.markdown("""
         color: #FFFFFF;
         font-family: Arial, sans-serif;
     }
-    .fustap-card {
-        background-color: #181818;
-        border: 1px solid #2A2A2A;
-        border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 14px;
-    }
     .title-main {
-        font-size: 30px;
+        font-size: 28px;
         font-weight: bold;
         color: #FFFFFF;
         margin-bottom: 0px;
@@ -38,7 +31,7 @@ st.markdown("""
         font-size: 11px;
         font-weight: bold;
         color: #8E8E93;
-        margin-bottom: 15px;
+        margin-bottom: 25px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -52,57 +45,54 @@ if 'analizador' not in st.session_state:
 st.markdown('<p class="title-main">FustApp</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">ANÀLISI ACÚSTICA DE PLACA LLIURE</p>', unsafe_allow_html=True)
 
-# --- TARJETA 1: SELECCIÓ DE FUSTA ---
-with st.container():
-    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-    st.markdown('<b>SELECCIONA LA FUSTA</b>', unsafe_allow_html=True)
-    fusta_seleccionada = st.selectbox(
-        "Fusta", 
-        list(st.session_state.analizador.maderas_db.keys()),
-        label_visibility="collapsed"
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- SECCIÓ 1: SELECCIÓ DE FUSTA ---
+st.markdown('<b>SELECCIONA LA FUSTA</b>', unsafe_allow_html=True)
+fusta_seleccionada = st.selectbox(
+    "Fusta", 
+    list(st.session_state.analizador.maderas_db.keys()),
+    label_visibility="collapsed"
+)
 
-# --- TARJETA 2: GROIX ACTUAL ---
-with st.container():
-    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-    st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
-    gruix_str = st.text_input("Gruix", placeholder="Ex: 2.8", label_visibility="collapsed")
-    st.markdown('</div>', unsafe_allow_html=True)
+st.write("") # Espaiat net
 
-# --- TARJETA 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
-with st.container():
-    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
-    st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
-    st.write("Fes clic un cop i colpeja ràpidament la fusta:")
-    
-    audio_info = mic_recorder(
-        start_prompt="🎙️ CLICA I COLPEJA",
-        just_once=True,
-        key='mic_automatic'
-    )
+# --- SECCIÓ 2: GROIX ACTUAL ---
+st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
+gruix_str = st.text_input("Gruix", placeholder="Ex: 2.8", label_visibility="collapsed")
 
-    if audio_info and 'bytes' in audio_info:
-        try:
-            container = av.open(io.BytesIO(audio_info['bytes']))
-            audio_stream = container.streams.audio[0]
+st.write("")
+
+# --- SECCIÓ 3: CAPTURA DE L'ÀUDIO EN DIRECTE ---
+st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
+st.write("Fes clic un cop i colpeja ràpidament la fusta:")
+
+audio_info = mic_recorder(
+    start_prompt="🎙️ CLICA I COLPEJA",
+    just_once=True,
+    key='mic_automatic'
+)
+
+if audio_info and 'bytes' in audio_info:
+    try:
+        container = av.open(io.BytesIO(audio_info['bytes']))
+        audio_stream = container.streams.audio[0]
+        
+        frames_list = []
+        for frame in container.decode(audio_stream):
+            sound_array = frame.to_ndarray()
+            if len(sound_array.shape) > 1:
+                sound_array = sound_array.mean(axis=0)
+            frames_list.append(sound_array)
             
-            frames_list = []
-            for frame in container.decode(audio_stream):
-                sound_array = frame.to_ndarray()
-                if len(sound_array.shape) > 1:
-                    sound_array = sound_array.mean(axis=0)
-                frames_list.append(sound_array)
-                
-            if frames_list:
-                audio_data = np.concatenate(frames_list)
-                st.session_state.analizador.sample_rate = audio_stream.rate
-                st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_data)
-        except Exception as e:
-            st.error(f"Error processant l'àudio: {e}")
+        if frames_list:
+            audio_data = np.concatenate(frames_list)
+            st.session_state.analizador.sample_rate = audio_stream.rate
+            st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_data)
+    except Exception as e:
+        st.error(f"Error processant l'àudio: {e}")
 
-    st.markdown(f"<h2 style='text-align: center; color: #FFFFFF; margin-top: 10px;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color: #FFFFFF; margin-top: 15px;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
+
+st.write("")
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
 if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True):
@@ -121,8 +111,8 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
     )
     diferencia = grosor_nou - grosor_actual
     
-    # --- TARJETA 4: RESULTATS ---
-    st.markdown('<div class="fustap-card" style="background-color: #121212;">', unsafe_allow_html=True)
+    # --- RESULTATS ---
+    st.markdown("---")
     st.markdown(f"<b>RESULTATS PER A {fusta_seleccionada.upper()}:</b>", unsafe_allow_html=True)
     st.write(f"• Velocitat del so (v): {v_sonido} m/s")
     st.write(f"• Freqüència objectiu: {f_obj} Hz")
@@ -134,7 +124,6 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
         st.warning(f"⚠️ Placa rígida. Cal rebaixar ~{abs(diferencia):.2f} mm.")
     else:
         st.info("ℹ️ Placa flexible per sota de l'objectiu. Vigila.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- PEU DE PÀGINA ---
-st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold; margin-top: 20px;'>By: Joan Serrato</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #636366; font-size: 10px; font-weight: bold; margin-top: 35px;'>By: Joan Serrato</p>", unsafe_allow_html=True)
