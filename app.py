@@ -1,6 +1,5 @@
 import streamlit as st
 from acustica_lutheria import AnalizadorTapTuning
-
 # Configuració de la pàgina per a format mòbil
 st.set_page_config(
     page_title="FustApp - TAP TUNING",
