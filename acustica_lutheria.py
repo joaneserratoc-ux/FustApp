@@ -45,9 +45,8 @@ class AnalizadorTapTuning:
     def grabar_golpe(self):
         """Activa el micròfon del dispositiu, grava el 'tap' i retorna l'array d'àudio."""
         if sd is None:
-            raise RuntimeError("El micròfon no està disponible al núvol. Introdueix la freqüència manualment.")
+            raise RuntimeError("El micròfon no està disponible al núvol.")
             
-        print("🎙️ Escoltant... ¡Colpeja la fusta ara!")
         audio_data = sd.rec(int(self.duration * self.sample_rate),
                     samplerate=self.sample_rate,
                     channels=1,
@@ -57,17 +56,40 @@ class AnalizadorTapTuning:
 
     def obtener_frecuencia_dominante(self, audio_data):
         """
-        Aplica la Transformada Ràpida de Fourier (FFT) per extreure 
-        la freqüència dominant (Hz) del cop d'àudio dins del rang útil.
+        Aïlla automàticament el pic de màxim impacte del cop, aplica una finestra 
+        matemàtica i extreu la freqüència dominant (Hz) de manera estable.
         """
-        fft_result = np.fft.fft(audio_data)
+        if len(audio_data) == 0:
+            return 0.0
+            
+        # 1. Trobar el moment exacte del cop (pic de màxima amplitud)
+        idx_max = np.argmax(np.abs(audio_data))
+        
+        # 2. Retallar una finestra precisa al voltant del cop (20 mil·lisegons abans, 200 ms després)
+        # Això elimina silencis, eco i soroll de fons recollit pel navegador del mòbil
+        margen_antes = int(self.sample_rate * 0.02)
+        margen_despues = int(self.sample_rate * 0.20)
+        
+        inicio = max(0, idx_max - margen_antes)
+        fin = min(len(audio_data), idx_max + margen_despues)
+        audio_recortado = audio_data[inicio:fin]
+        
+        if len(audio_recortado) < 100:
+            audio_recortado = audio_data
+
+        # 3. Aplicar finestra de Hanning per evitar distorsions espectrals
+        ventana = np.hanning(len(audio_recortado))
+        audio_ventaneado = audio_recortado * ventana
+
+        # 4. Transformada Ràpida de Fourier (FFT)
+        fft_result = np.fft.fft(audio_ventaneado)
         frecuencias = np.fft.fftfreq(len(fft_result), 1 / self.sample_rate)
         
         mitad = len(frecuencias) // 2
         frecuencias = frecuencias[:mitad]
         amplitudes = np.abs(fft_result)[:mitad]
         
-        # Filtratge d'amplituds vàlides per a tap tuning (50 Hz - 1000 Hz)
+        # Filtratge d'amplituds vàlides per a tap tuning de guitarres (50 Hz - 1000 Hz)
         rango_valido = (frecuencias > 50) & (frecuencias < 1000)
         frecuencias_filtradas = frecuencias[rango_valido]
         amplitudes_filtradas = amplitudes[rango_valido]
@@ -91,12 +113,10 @@ class AnalizadorTapTuning:
         rho = info["rho"]
         f_obj = info["f_objetivo"]
         
-        # Velocitat de propagació de l'ona longitudinal v = sqrt(E / rho)
         v_sonido = np.sqrt(E / rho)
         
         if freq_medida <= 0:
             return grosor_actual, round(v_sonido, 2), f_obj
             
-        # Càlcul del nou gruix recomanat per a la placa lliure
         grosor_nou = grosor_actual * (f_obj / freq_medida)
         return round(grosor_nou, 2), round(v_sonido, 2), f_obj
