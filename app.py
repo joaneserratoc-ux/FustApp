@@ -68,39 +68,40 @@ st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
 gruix_str = st.text_input("", placeholder="Ex: 2.8", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: GRAVACIÓ NATIVA AMB EL MICRÒFON DEL MÒBIL ---
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
+# --- TARJETA 3: CAPTURA DE L'ÀUDIO EN DIRECTE (UN SOL CLIC) ---
+with st.container():
+    st.markdown('<div class="fustap-card">', unsafe_allow_html=True)
+    st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
+    st.write("Fes clic un cop i colpeja ràpidament la fusta:")
 
-# Botó natiu de micròfon integrat a la interfície mòbil
-audio_info = mic_recorder(
-    start_prompt="🎙️ CLICA I COLPEJA LA FUSTA",
-    stop_prompt="⏹️ ATURAR I PROCESSAR",
-    key='mic_natiu'
-)
+    # Amb just_once=True, el micro s'activa, grava el cop i s'atura sol automàticament
+    audio_info = mic_recorder(
+        start_prompt="🎙️ CLICA I COLPEJA",
+        just_once=True,
+        key='mic_automatic'
+    )
 
-if audio_info and 'bytes' in audio_info:
-    try:
-        # Descodifiquem l'àudio rebut del navegador al moment utilitzant PyAV
-        container = av.open(io.BytesIO(audio_info['bytes']))
-        audio_stream = container.streams.audio[0]
-        
-        frames_list = []
-        for frame in container.decode(audio_stream):
-            sound_array = frame.to_ndarray()
-            if len(sound_array.shape) > 1:
-                sound_array = sound_array.mean(axis=0)
-            frames_list.append(sound_array)
+    if audio_info and 'bytes' in audio_info:
+        try:
+            container = av.open(io.BytesIO(audio_info['bytes']))
+            audio_stream = container.streams.audio[0]
             
-        if frames_list:
-            audio_data = np.concatenate(frames_list)
-            st.session_state.analizador.sample_rate = audio_stream.rate
-            st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_data)
-    except Exception as e:
-        st.error(f"Error processant l'àudio: {e}")
+            frames_list = []
+            for frame in container.decode(audio_stream):
+                sound_array = frame.to_ndarray()
+                if len(sound_array.shape) > 1:
+                    sound_array = sound_array.mean(axis=0)
+                frames_list.append(sound_array)
+                
+            if frames_list:
+                audio_data = np.concatenate(frames_list)
+                st.session_state.analizador.sample_rate = audio_stream.rate
+                st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_data)
+        except Exception as e:
+            st.error(f"Error processant l'àudio: {e}")
 
-st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; color: #FFFFFF; margin-top: 10px;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
 if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True):
