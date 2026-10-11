@@ -1,8 +1,9 @@
 import streamlit as st
 import numpy as np
-import soundfile as sf
+import av
 import io
 from acustica_lutheria import AnalizadorTapTuning
+from streamlit_mic_recorder import mic_recorder
 
 # Configuració de la pàgina per a format mòbil
 st.set_page_config(
@@ -12,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil CSS personalitzat per a disseny fosc
+# Estil CSS personalitzat per a disseny fosc absolut
 st.markdown("""
     <style>
     .stApp {
@@ -67,31 +68,38 @@ st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
 gruix_str = st.text_input("", placeholder="Ex: 2.8", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: GRAVACIÓ / PUJADA DES DEL MÒBIL ---
+# --- TARJETA 3: GRAVACIÓ NATIVA AMB EL MICRÒFON DEL MÒBIL ---
 st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>CAPTURA L\'ÀUDIO DEL COP</b>', unsafe_allow_html=True)
-st.write("Fes clic a continuació per gravar o pujar l'àudio del cop a la fusta:")
+st.markdown('<b>CAPTURA DEL COP EN DIRECTE</b>', unsafe_allow_html=True)
 
-# Aquest component obre directament l'opció de gravar àudio al mòbil
-audio_file = st.file_uploader("", type=["wav", "mp3", "m4a", "webm", "ogg"], label_visibility="collapsed")
+# Botó natiu de micròfon integrat a la interfície mòbil
+audio_info = mic_recorder(
+    start_prompt="🎙️ CLICA I COLPEJA LA FUSTA",
+    stop_prompt="⏹️ ATURAR I PROCESSAR",
+    key='mic_natiu'
+)
 
-if audio_file is not None:
+if audio_info and 'bytes' in audio_info:
     try:
-        # Llegim l'arxiu d'àudio pujat des del mòbil
-        data, samplerate = sf.read(io.BytesIO(audio_file.read()))
+        # Descodifiquem l'àudio rebut del navegador al moment utilitzant PyAV
+        container = av.open(io.BytesIO(audio_info['bytes']))
+        audio_stream = container.streams.audio[0]
         
-        # Si és estèreo, passem a mono sumant els canals
-        if len(data.shape) > 1:
-            data = data.mean(axis=1)
+        frames_list = []
+        for frame in container.decode(audio_stream):
+            sound_array = frame.to_ndarray()
+            if len(sound_array.shape) > 1:
+                sound_array = sound_array.mean(axis=0)
+            frames_list.append(sound_array)
             
-        # Actualitzem el sample rate de l'analitzador si cal i calculem
-        st.session_state.analizador.sample_rate = samplerate
-        st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(data)
-        st.success(f"¡Àudio analitzat correctament!")
+        if frames_list:
+            audio_data = np.concatenate(frames_list)
+            st.session_state.analizador.sample_rate = audio_stream.rate
+            st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_data)
     except Exception as e:
-        st.error(f"Error en processar l'àudio: {e}")
+        st.error(f"Error processant l'àudio: {e}")
 
-st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>Freqüència: {st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
@@ -103,7 +111,7 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
         st.stop()
         
     if st.session_state.freq_captada <= 0:
-        st.warning("Primer has de pujar o gravar un cop d'àudio.")
+        st.warning("Primer has de capturar un cop amb el micròfon.")
         st.stop()
 
     grosor_nou, v_sonido, f_obj = st.session_state.analizador.calcular_ajuste_grosor(
