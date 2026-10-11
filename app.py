@@ -1,6 +1,8 @@
 import streamlit as st
+import numpy as np
+import soundfile as sf
+import io
 from acustica_lutheria import AnalizadorTapTuning
-from streamlit_mic_recorder import mic_recorder  # Componente per gravar des del mòbil
 
 # Configuració de la pàgina per a format mòbil
 st.set_page_config(
@@ -10,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estil CSS personalitzat
+# Estil CSS personalitzat per a disseny fosc
 st.markdown("""
     <style>
     .stApp {
@@ -65,27 +67,31 @@ st.markdown('<b>GRUIX ACTUAL DE LA PLACA (MM)</b>', unsafe_allow_html=True)
 gruix_str = st.text_input("", placeholder="Ex: 2.8", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TARJETA 3: FREQÜÈNCIA I MICRÒFON MÒBIL ---
+# --- TARJETA 3: GRAVACIÓ / PUJADA DES DEL MÒBIL ---
 st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<b>CAPTURA DE L\'ÀUDIO AMB EL MÒBIL</b>', unsafe_allow_html=True)
+st.markdown('<b>CAPTURA L\'ÀUDIO DEL COP</b>', unsafe_allow_html=True)
+st.write("Fes clic a continuació per gravar o pujar l'àudio del cop a la fusta:")
 
-# Aquest botó activa directament el micròfon del telèfon a través del navegador
-audio_info = mic_recorder(
-    start_prompt="🎙️ CLICA PER GRAVAR EL COP",
-    stop_prompt="⏹️ ATURAR I ANALITZAR",
-    key='mic_mobil'
-)
+# Aquest component obre directament l'opció de gravar àudio al mòbil
+audio_file = st.file_uploader("", type=["wav", "mp3", "m4a", "webm", "ogg"], label_visibility="collapsed")
 
-if audio_info:
-    # El component retorna un diccionari amb les dades d'àudio en bytes
-    audio_bytes = audio_info['bytes']
-    import numpy as np
-    # Convertim els bytes d'àudio a array de numpy per a la FFT
-    audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
-    if len(audio_np) > 0:
-        st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(audio_np)
+if audio_file is not None:
+    try:
+        # Llegim l'arxiu d'àudio pujat des del mòbil
+        data, samplerate = sf.read(io.BytesIO(audio_file.read()))
+        
+        # Si és estèreo, passem a mono sumant els canals
+        if len(data.shape) > 1:
+            data = data.mean(axis=1)
+            
+        # Actualitzem el sample rate de l'analitzador si cal i calculem
+        st.session_state.analizador.sample_rate = samplerate
+        st.session_state.freq_captada = st.session_state.analizador.obtener_frecuencia_dominante(data)
+        st.success(f"¡Àudio analitzat correctament!")
+    except Exception as e:
+        st.error(f"Error en processar l'àudio: {e}")
 
-st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>{st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color: #FFFFFF;'>Freqüència: {st.session_state.freq_captada} Hz</h2>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- BOTÓ DE CÀLCUL PRINCIPAL ---
@@ -97,7 +103,7 @@ if st.button("CALCULAR AJUST DE GRUIX", type="primary", use_container_width=True
         st.stop()
         
     if st.session_state.freq_captada <= 0:
-        st.warning("Primer has de gravar un cop amb el micròfon.")
+        st.warning("Primer has de pujar o gravar un cop d'àudio.")
         st.stop()
 
     grosor_nou, v_sonido, f_obj = st.session_state.analizador.calcular_ajuste_grosor(
