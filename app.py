@@ -13,6 +13,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+st.markdown(
+    """
+    <link rel="manifest" href="./app/static/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./app/static/icon-192.png">
+    """,
+    unsafe_allow_html=True
+)
 # Estil minimalista net, sense caixes grises i amb detall d'accent daurat
 st.markdown("""
     <style>
